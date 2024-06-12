@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas de Naturaleza</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let stars = [];
+        let fireflies = [];
+        let grass = [];
+        let moon;
+        let city;
+        let character;
+
+        function init() {
+            for (let i = 0; i < 100; i++) {
+                stars.push(new Star());
+            }
+            for (let i = 0; i < 20; i++) {
+                fireflies.push(new Firefly());
+            }
+            for (let i = 0; i < 50; i++) {
+                grass.push(new Grass());
+            }
+            moon = new Moon();
+            city = new City();
+            character = new Character();
+        }
+
+        class Star {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height * 0.5;
+                this.radius = Math.random() * 2;
+                this.alpha = Math.random();
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class Firefly {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.radius = Math.random() * 5;
+                this.speedX = (Math.random() - 0.5) * 2;
+                this.speedY = (Math.random() - 0.5) * 2;
+                this.alpha = Math.random() * 0.5 + 0.5;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 0, ${this.alpha})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class Grass {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height - (Math.random() * 50);
+                this.width = Math.random() * 5 + 2;
+                this.height = Math.random() * 30 + 10;
+                this.speed = Math.random() * 0.5 + 0.2;
+            }
+
+            update() {
+                this.x -= this.speed;
+                if (this.x < -this.width) this.x = canvas.width;
+            }
+
+            draw() {
+                ctx.fillStyle = 'green';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+        }
+
+        class Moon {
+            constructor() {
+                this.x = canvas.width * 0.8;
+                this.y = canvas.height * 0.2;
+                this.radius = 50;
+                this.phase = 0;
+            }
+
+            update() {
+                this.phase += 0.01;
+                this.x = canvas.width * 0.8 + Math.cos(this.phase) * 50;
+                this.y = canvas.height * 0.2 + Math.sin(this.phase) * 20;
+            }
+
+            draw() {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.beginPath();
+                ctx.arc(this.x + 15, this.y - 10, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(this.x - 10, this.y + 10, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class City {
+            constructor() {
+                this.buildings = [];
+                this.spacing = 20; // Espacio entre edificios
+                this.maxHeight = 300; // Altura máxima de los edificios
+                this.minHeight = 500; // Altura mínima de los edificios
+                this.maxWidth = 100; // Anchura máxima de los edificios
+                this.minWidth = 50; // Anchura mínima de los edificios
+                this.initBuildings();
+            }
+
+            initBuildings() {
+                let xPos = this.spacing;
+                while (xPos < canvas.width) {
+                    const building = new Building(xPos);
+                    this.buildings.push(building);
+                    xPos += building.width + this.spacing;
+                }
+            }
+
+            draw() {
+                this.buildings.forEach(building => building.draw());
+            }
+        }
+
+        class Building {
+            constructor(x) {
+                this.x = x;
+                this.y = canvas.height - (Math.random() * 200 + 100);
+                this.width = Math.random() * 50 + 50;
+                this.height = canvas.height - this.y;
+                this.windowRows = Math.floor(this.height / 20);
+                this.windowCols = Math.floor(this.width / 20);
+                this.windowStatus = Array.from({ length: this.windowRows }, () => 
+                    Array.from({ length: this.windowCols }, () => Math.random() > 0.5));
+            }
+
+            draw() {
+                ctx.fillStyle = 'rgba(50, 50, 50, 0.8)';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                for (let i = 0; i < this.windowRows; i++) {
+                    for (let j = 0; j < this.windowCols; j++) {
+                        if (this.windowStatus[i][j]) {
+                            ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+                            ctx.fillRect(this.x + j * 20 + 5, this.y + i * 20 + 5, 10, 10);
+                        }
+                    }
+                }
+            }
+
+            updateWindows() {
+                for (let i = 0; i < this.windowRows; i++) {
+                    for (let j = 0; j < this.windowCols; j++) {
+                        if (this.windowStatus[i][j] && Math.random() > 0.99) {
+                            this.windowStatus[i][j] = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        class Character {
+            constructor() {
+                this.image = new Image();
+                this.image.src = 'ti.png';
+                this.loaded = false;
+                this.image.onload = () => {
+                    this.loaded = true;
+                    this.x = canvas.width * 0.1;
+                    this.y = canvas.height - this.image.height;
+                };
+            }
+
+            draw() {
+                if (this.loaded) {
+                    ctx.drawImage(this.image, this.x, this.y);
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            moon.update();
+            moon.draw();
+
+            stars.forEach(star => star.draw());
+            fireflies.forEach(firefly => {
+                firefly.update();
+                firefly.draw();
+            });
+            grass.forEach(blade => {
+                blade.update();
+                blade.draw();
+            });
+
+            city.buildings.forEach(building => building.updateWindows());
+            city.draw();
+
+            character.draw();
+
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            stars = [];
+            fireflies = [];
+            grass = [];
+            init();
+        });
+    </script>
+</body>
+</html>
